@@ -1,81 +1,38 @@
-# stage 1: build MPICH with GCC
-ARG BASE_IMAGE="gcc"
-ARG BASE_TAG="9.2.0"
-ARG GCC_VERSION=latest
-FROM ${BASE_IMAGE}:${BASE_TAG} AS builder
+# Build MPICH with latest spack
+ARG SPACK_VERSION="0.14"
+FROM spack/ubuntu-xenial:${SPACK_VERSION} AS builder
 
 LABEL maintainer="Wang An <wangan.cs@gmail.com>"
 
 USER root
 
-# install basic buiding tools
-RUN set -eu; \
-      \
-      apt-get update; \
-      apt-get install -y \
-              autoconf \
-              automake \
-              make \
-              wget
-
-# stage 1.1: download MPICH source
+ARG GCC_VERSION="9.2.0"
+ENV GCC_VERSION=${GCC_VERSION}
 ARG MPICH_VERSION="3.2.1"
 ENV MPICH_VERSION=${MPICH_VERSION}
-ENV MPICH_TARBALL="mpich-${MPICH_VERSION}.tar.gz"
-
-WORKDIR /tmp
-RUN set -eux; \
-      \
-      # checksums are not provided due to the build-time arguments MPICH_VERSION
-      wget "http://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz"; \
-      tar -xzf ${MPICH_TARBALL}
-
-# stage 1.2: build and install MPICH
-ARG MPICH_OPTIONS="--enable-shared"
+ARG MPICH_OPTIONS=""
 ENV MPICH_OPTIONS=${MPICH_OPTIONS}
-ENV MPICH_PREFIX="/opt/mpich/${MPICH_VERSION}"
 
-WORKDIR /tmp/mpich-${MPICH_VERSION}
-RUN set -eux; \
+# install GCC
+RUN set -eu; \
       \
-      ./configure \
-                  --prefix=${MPICH_PREFIX} \
-                  ${MPICH_OPTIONS} \
-      ; \
-      make -j "$(nproc)"; \
-      make install; \
+      spack install gcc@${GCC_VERSION}; \
+      spack load gcc@${GCC_VERSION}; \
+      spack compiler add
+
+# install MPICH
+RUN set -eu; \
       \
-      rm -rf mpich-${MPICH_VERSION} ${MPICH_TARBALL}
+      spack install mpich@${MPICH_VERSION} %gcc@${GCC_VERSION} ${MPICH_OPTIONS}; \
+      spack load -r mpich@${MPICH_VERSION}
 
-
-# stage 2: build the runtime environment
-ARG BASE_IMAGE
-ARG BASE_TAG
-FROM ${BASE_IMAGE}:${BASE_TAG}
-
-USER root
-
-# install mpi dependencies
+# install mpi runtime dependencies
 RUN set -eu; \
       \
       apt-get update; \
       apt-get install -y \
               openssh-server \
               sudo
-
-# define environment variables
-ARG MPICH_VERSION="3.2.1"
-ENV MPICH_VERSION=${MPICH_VERSION}
-ENV MPICH_PATH="/opt/mpich/${MPICH_VERSION}"
-
-# copy artifacts from stage 1
-COPY --from=builder ${MPICH_PATH} ${MPICH_PATH}
-
-# set environment variables for users
-ENV PATH="${MPICH_PATH}/bin:${PATH}"
-ENV CPATH="${MPICH_PATH}/include:${CPATH}"
-ENV LIBRARY_PATH="${MPICH_PATH}/lib:${LIBRARY_PATH}"
-ENV LD_LIBRARY_PATH="${MPICH_PATH}/lib:${LD_LIBRARY_PATH}"
 
 # define environment variables
 ARG GROUP_NAME
@@ -88,6 +45,11 @@ ARG USER_ID
 ENV USER_ID=${USER_ID:-1000}
 
 ENV USER_HOME="/home/${USER_NAME}"
+
+# initialize spack environment for all users
+ENV SPACK_ROOT=/opt/spack
+ENV PATH=${SPACK_ROOT}/bin:$PATH
+RUN source ${SPACK_ROOT}/share/spack/setup-env.sh
 
 # create the first user
 RUN set -eu; \
@@ -111,7 +73,6 @@ RUN set -eu; \
       \
       ssh-keygen -f ${USER_HOME}/.ssh/id_rsa -q -N ""; \
       mkdir -p ~/.ssh/ && chmod 700 ~/.ssh/
-
 
 # Build-time metadata as defined at http://label-schema.org
 ARG BUILD_DATE
