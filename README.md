@@ -32,14 +32,14 @@ The base image is [spack/ubuntu-xenial](https://hub.docker.com/r/spack/ubuntu-xe
 
 There are a bunch of build-time arguments you can use to build the GCC-MPICH image.
 
-It is hightly recommended that you build the image with `make`.
+It is highly recommended that you build the image with `make`.
 
 ```bash
-# Build an image for MPICH 3.2.1
-make MPICH_VERSION="3.2.1" GCC_VERSION="9.2.0"
+# Build an image for MPICH 3.3.2
+make MPICH_VERSION="3.3.2" GCC_VERSION="9.2.0"
 
 # Build and publish the image
-make release MPICH_VERSION="3.2.1"
+make release MPICH_VERSION="3.3.2"
 ```
 
 Check `Makefile` for more options.
@@ -51,7 +51,7 @@ As an alternative, you can build the image with `docker build` command.
 ```bash
 docker build \
         --build-arg GCC_VERSION="9.2.0" \
-        --build-arg MPICH_VERSION="3.2.1" \
+        --build-arg MPICH_VERSION="3.3.2" \
         --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
         --build-arg VCS_REF=`git rev-parse --short HEAD` \
         -t my-repo/gmpich:latest .
@@ -61,7 +61,7 @@ Arguments and their defaults are listed below.
 
 - `GCC_VERSION`: The version of GCC supported by spack (defaults to `9.2.0`)
 
-- `MPICH_VERSION`: The version of MPICH supported by spack (defaults to `3.2.1`)
+- `MPICH_VERSION`: The version of MPICH supported by spack (defaults to `3.3.2`)
 
 - `MPICH_OPTIONS`: Spack variants (defaults to none)
 

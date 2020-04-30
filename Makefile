@@ -5,7 +5,7 @@
 # Build-time arguments
 SPACK_VERSION  ?= 0.14
 GCC_VERSION    ?= 9.2.0
-MPICH_VERSION  ?= 3.2.1
+MPICH_VERSION  ?= 3.3.2
 
 # Spack variants
 MPICH_OPTIONS  ?= ""
