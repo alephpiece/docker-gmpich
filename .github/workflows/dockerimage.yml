@@ -6,11 +6,11 @@ on:
       - master
 
 jobs:
-  build:
+  build_3_3_2:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@master
 
     - name: Publish to Registry
       uses: elgohr/Publish-Docker-Github-Action@master
@@ -18,9 +18,32 @@ jobs:
         BUILD_DATE: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
         VCS_URL: $(git config --get remote.origin.url)
         VCS_REF: $(git rev-parse --short HEAD)
+        MPICH_VERSION: 3.3.2
       with:
         name: leavesask/gmpich
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
-        buildargs: BUILD_DATE,VCS_URL,VCS_REF
+        buildargs: MPICH_VERSION,BUILD_DATE,VCS_URL,VCS_REF
         buildoptions: "--compress"
+        tags: "latest,3.3.2"
+
+  build_3_2_1:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@master
+
+    - name: Publish to Registry
+      uses: elgohr/Publish-Docker-Github-Action@master
+      env:
+        BUILD_DATE: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+        VCS_URL: $(git config --get remote.origin.url)
+        VCS_REF: $(git rev-parse --short HEAD)
+        MPICH_VERSION: 3.2.1
+      with:
+        name: leavesask/gmpich
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        buildargs: MPICH_VERSION,BUILD_DATE,VCS_URL,VCS_REF
+        buildoptions: "--compress"
+        tags: "3.2.1"
