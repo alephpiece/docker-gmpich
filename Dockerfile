@@ -1,8 +1,6 @@
-# Build MPICH with latest spack
-ARG SPACK_VERSION="0.14"
-FROM spack/ubuntu-xenial:${SPACK_VERSION} AS builder
-
-LABEL maintainer="Wang An <wangan.cs@gmail.com>"
+# stage 1: build MPICH with latest spack
+ARG GCC_VERSION="9.2.0"
+FROM leavesask/gcc:${GCC_VERSION} AS builder
 
 USER root
 
@@ -13,18 +11,29 @@ ENV MPICH_VERSION=${MPICH_VERSION}
 ARG MPICH_OPTIONS=""
 ENV MPICH_OPTIONS=${MPICH_OPTIONS}
 
-# install GCC
-RUN set -eu; \
-      \
-      spack install gcc@${GCC_VERSION}; \
-      spack load gcc@${GCC_VERSION}; \
-      spack compiler add
-
 # install MPICH
+RUN spack install --show-log-on-error -y mpich@${MPICH_VERSION} %gcc@${GCC_VERSION} ${MPICH_OPTIONS}
+
+
+# stage 2: build the runtime environment
+ARG GCC_VERSION
+FROM leavesask/gcc:${GCC_VERSION}
+
+LABEL maintainer="Wang An <wangan.cs@gmail.com>"
+
+USER root
+
+ENV SPACK_ROOT=/opt/spack
+ENV PATH=${SPACK_ROOT}/bin:$PATH
+
+# copy artifacts from stage 1
+COPY --from=builder ${SPACK_ROOT} ${SPACK_ROOT}
+
+# initialize spack environment for all users
 RUN set -eu; \
       \
-      spack install mpich@${MPICH_VERSION} %gcc@${GCC_VERSION} ${MPICH_OPTIONS}; \
-      spack load -r mpich@${MPICH_VERSION}
+      source ${SPACK_ROOT}/share/spack/setup-env.sh; \
+      spack load mpich
 
 # install mpi runtime dependencies
 RUN set -eu; \
@@ -45,11 +54,6 @@ ARG USER_ID
 ENV USER_ID=${USER_ID:-1000}
 
 ENV USER_HOME="/home/${USER_NAME}"
-
-# initialize spack environment for all users
-ENV SPACK_ROOT=/opt/spack
-ENV PATH=${SPACK_ROOT}/bin:$PATH
-RUN source ${SPACK_ROOT}/share/spack/setup-env.sh
 
 # create the first user
 RUN set -eu; \
