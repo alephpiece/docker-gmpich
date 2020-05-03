@@ -14,15 +14,7 @@ ARG MPICH_OPTIONS=""
 ENV MPICH_OPTIONS=${MPICH_OPTIONS}
 
 # install MPICH
-RUN set -eu; \
-      \
-      spack install --show-log-on-error -y mpich@${MPICH_VERSION} %gcc@${GCC_VERSION} ${MPICH_OPTIONS}; \
-      spack load mpich@${MPICH_VERSION}
-
-# initialize spack environment for all users
-ENV SPACK_ROOT=/opt/spack
-ENV PATH=${SPACK_ROOT}/bin:$PATH
-RUN source ${SPACK_ROOT}/share/spack/setup-env.sh
+RUN spack install --show-log-on-error -y mpich@${MPICH_VERSION} %gcc@${GCC_VERSION} ${MPICH_OPTIONS}
 
 # install mpi runtime dependencies
 RUN set -eu; \
@@ -68,9 +60,11 @@ WORKDIR ${USER_HOME}
 RUN set -eu; \
       \
       ssh-keygen -f ${USER_HOME}/.ssh/id_rsa -q -N ""; \
-      mkdir -p ~/.ssh/ && chmod 700 ~/.ssh/; \
-      \
-      source ${SPACK_ROOT}/share/spack/setup-env.sh
+      mkdir -p ~/.ssh/ && chmod 700 ~/.ssh/
+
+# setup environment
+RUN echo "spack load -r mpich@${MPICH_VERSION}" >> ~/.bashrc
+
 
 # Build-time metadata as defined at http://label-schema.org
 ARG BUILD_DATE
@@ -83,3 +77,7 @@ LABEL org.label-schema.build-date=${BUILD_DATE} \
       org.label-schema.vcs-ref=${VCS_REF} \
       org.label-schema.vcs-url=${VCS_URL} \
       org.label-schema.schema-version="1.0"
+
+# setup entrypoint
+ENTRYPOINT ["/bin/bash"]
+CMD ["spack find --loaded"]
