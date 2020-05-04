@@ -7,6 +7,7 @@ GCC_VERSION    ?= 9.2.0
 MPICH_VERSION  ?= 3.3.2
 
 # Spack variants
+EXTRA_SPECS    ?= "target=skylake"
 MPICH_OPTIONS  ?= ""
 
 # Image name
@@ -46,6 +47,7 @@ docker_build:
                  --build-arg GCC_VERSION=$(GCC_VERSION) \
                  --build-arg MPICH_VERSION=$(MPICH_VERSION) \
                  --build-arg MPICH_OPTIONS=$(MPICH_OPTIONS) \
+                 --build-arg EXTRA_SPECS=$(EXTRA_SPECS) \
                  --build-arg BUILD_DATE=$(BUILD_DATE) \
                  --build-arg VCS_URL=$(VCS_URL) \
                  --build-arg VCS_REF=$(GIT_COMMIT) \

@@ -6,6 +6,8 @@ LABEL maintainer="Wang An <wangan.cs@gmail.com>"
 
 USER root
 
+ARG EXTRA_SPECS="target=skylake"
+ENV EXTRA_SPECS=${EXTRA_SPECS}
 ARG GCC_VERSION="9.2.0"
 ENV GCC_VERSION=${GCC_VERSION}
 ARG MPICH_VERSION="3.3.2"
@@ -18,7 +20,7 @@ ENV SPACK_ROOT=/opt/spack
 
 # install MPICH
 RUN set -e; \
-    spack install mpich@${MPICH_VERSION} %gcc@${GCC_VERSION} ${MPICH_OPTIONS}; \
+    spack install mpich@${MPICH_VERSION} %gcc@${GCC_VERSION} $MPICH_OPTIONS $EXTRA_SPECS; \
     spack clean -a
 
 # install mpi runtime dependencies
@@ -52,7 +54,6 @@ RUN set -eu; \
           \
           cp -r ~/.spack $USER_HOME; \
           chown -R ${USER_NAME}: $USER_HOME/.spack; \
-          chown -R ${USER_NAME}: $SPACK_ROOT; \
       fi
 
 # generate ssh keys for root
@@ -63,7 +64,6 @@ RUN set -eu; \
 
 # generate ssh keys for the newly added user
 USER $USER_NAME
-
 WORKDIR $USER_HOME
 RUN set -eu; \
       \
